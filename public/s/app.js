@@ -541,7 +541,7 @@
     people.forEach(function (t) {
       var theirs = weekItems.filter(function (v) { return v.teacherId === t.id; });
       var min = theirs.reduce(function (n, v) { return n + shiftMinutes(v); }, 0);
-      html += '<tr class="' + (t.id === user.id ? 'is-me' : '') + '"><td class="sg-person">' + avatar(t) + '<span class="sg-name"><strong>' + esc(t.name) + (t.id === user.id ? ' <span class="muted">(you)</span>' : '') + '</strong><span class="muted tnum">' + esc(hoursLabel(min)) + '</span></span></td>';
+      html += '<tr class="' + (t.id === user.id ? 'is-me' : '') + '"><td class="sg-person"><div class="sg-pwrap">' + avatar(t) + '<span class="sg-name"><strong>' + esc(t.name) + (t.id === user.id ? ' <span class="muted">(you)</span>' : '') + '</strong><span class="muted tnum">' + esc(hoursLabel(min)) + '</span></span></div></td>';
       showDays.forEach(function (d) {
         var cell = theirs.filter(function (v) { return v.date === d; });
         html += '<td class="' + (d === today ? 'is-today' : '') + '">' + cell.map(function (v) {
