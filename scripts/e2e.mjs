@@ -68,7 +68,7 @@ t = await text();
 check(t.includes("Not clocked in") && /Clocked out/.test(t), "clocked out, punches listed");
 await page.goto(base + "/schedule/");
 await page.waitForSelector(".greeting");
-await page.locator("button", { hasText: "Log out" }).click();
+await page.locator("button", { hasText: "Log out" }).first().click();
 await page.waitForSelector("#who");
 
 console.log("[Admin: schedule edit saves to the server]");
