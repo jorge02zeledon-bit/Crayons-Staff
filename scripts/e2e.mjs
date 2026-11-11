@@ -33,11 +33,19 @@ async function login(name, pin) {
 
 console.log("[Teacher sign-in and schedule]");
 await login("Maria Lopez", "1111");
-await page.waitForSelector(".greeting");
+await page.waitForSelector(".sgrid");
 let t = await text();
-check(/Good (morning|afternoon|evening), Maria/.test(t), "Maria signed in");
+check(/Good (morning|afternoon|evening), Maria/.test(t), "Maria signed in and lands on the dashboard");
+check(/Team schedule/i.test(t) && t.includes("Maria Lopez (you)"), "team grid shows Maria's row first");
+check((await page.locator(".shiftchip.sc-cross").count()) >= 1, "cross-coverage chips in the grid");
+check(!t.includes("Draft") && !t.includes("draft"), "no drafts visible to a teacher");
+await page.waitForFunction(() => !/…/.test(document.querySelector("#tile-clocked strong")?.textContent || "…"), null, { timeout: 8000 }).catch(() => {});
+check(/Clocked this week/i.test(t), "clocked-hours tile present");
+await shot("00-teacher-dash");
+await page.locator(".tab", { hasText: "My day" }).click();
+await page.waitForSelector(".today-card, .empty-today");
+t = await text();
 check(t.includes("Break clock"), "break clock link in header");
-check(!t.includes("Draft"), "no drafts visible to a teacher");
 await shot("01-teacher-schedule");
 
 console.log("[Phone clock]");
@@ -65,6 +73,10 @@ await page.waitForSelector(".person");
 
 console.log("[Admin: schedule edit saves to the server]");
 await login("Dana Reyes", "0000");
+await page.waitForSelector(".sgrid");
+check((await page.locator("button.shiftchip").count()) > 10, "admin dashboard chips are editable buttons");
+await shot("02b-admin-dash");
+await page.locator(".tab", { hasText: "Week" }).click();
 await page.waitForSelector(".day-tabs");
 t = await text("#app");
 check(t.includes("Hours"), "admin tab bar links to Hours");

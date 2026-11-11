@@ -18,6 +18,7 @@
     adminDay: null,       // ISO date
     boardDay: null,
     teacherWeekOffset: null, // null = decide on first render; 0 = this week, 1 = next week
+    dashWeek: null,          // ISO Monday shown on the dashboard grid
     loginPerson: null,
     loginError: '',
     sheet: null,          // { kind: 'assignment'|'teacher', model, errors, warnings, isNew, reassign }
@@ -231,13 +232,13 @@
     var r = ui.route || readHash();
     if (!user) return 'login';
     if (isAdmin(user)) {
-      if (!r || r === 'login' || r === 'me') return 'admin-week';
-      if (/^admin-(week|board|staff|menu)$/.test(r) || /^preview-/.test(r)) return r;
-      return 'admin-week';
+      if (!r || r === 'login') return 'dash';
+      if (r === 'me' || r === 'dash' || /^admin-(week|board|staff|menu)$/.test(r) || /^preview-/.test(r)) return r;
+      return 'dash';
     }
-    return 'me';
+    return r === 'me' ? 'me' : 'dash';
   }
-  var TITLES = { login: 'Sign in', me: 'My Schedule', 'admin-week': 'Schedule builder', 'admin-board': 'Who is where', 'admin-staff': 'Staff', 'admin-menu': 'Menu' };
+  var TITLES = { login: 'Sign in', dash: 'Dashboard', me: 'My Schedule', 'admin-week': 'Schedule builder', 'admin-board': 'Who is where', 'admin-staff': 'Staff', 'admin-menu': 'Menu' };
 
   // ---------------------------------------------------------------- render
   // A selector that finds "the same control" again after a re-render, so focus is not dropped to <body>.
@@ -265,7 +266,8 @@
     var html = '';
     app.className = 'app';
     if (route === 'login') html = viewLogin();
-    else if (route === 'me') { app.className = 'app app-teacher'; html = viewTeacher(currentUser(), { preview: false }); }
+    else if (route === 'dash') { app.className = 'app app-dash'; html = viewDash(currentUser()); }
+    else if (route === 'me') { app.className = 'app app-teacher has-tabs'; html = viewTeacher(currentUser(), { preview: false }); }
     else if (route.indexOf('preview-') === 0) {
       var t = T()[route.slice(8)];
       app.className = 'app app-teacher';
@@ -277,6 +279,7 @@
     else if (route === 'admin-menu') html = viewAdminMenu();
     app.innerHTML = html;
     renderLayer();
+    if (route === 'dash') fillClockedTile();
     document.title = (TITLES[route] || 'My Schedule') + ' · ' + (state ? state.settings.schoolName : boot.schoolName);
     if (routeChanged) {
       ui.lastRoute = route;
@@ -304,7 +307,7 @@
     if (sheetEl) { try { sheetEl.inert = !!ui.dialog; } catch (e) { /* ignore */ } }
     syncSegmented(layer);
     if (ui.sheet) {
-      if (ui.sheet.kind === 'assignment') updateEditorLive();
+      if (ui.sheet.kind === 'assignment') { updateEditorLive(ui.sheet.prefill ? 'teacherId' : undefined); ui.sheet.prefill = false; }
       var first = layer.querySelector('.sheet [autofocus]');
       if (first && !ui.sheet.keepFocus && !ui.dialog) focusEl(first);
       ui.sheet.keepFocus = false;
@@ -478,7 +481,97 @@
       '</div></section>';
 
     html += '<footer class="footer-help"><p><strong>Something look wrong?</strong> Talk to ' + esc(state.settings.adminName) + '. ' + esc(state.settings.adminContact) + '</p></footer>';
+    if (!preview) html += adminTabs('me');
     return html;
+  }
+
+  // ---------------------------------------------------------------- dashboard (team week)
+  function shiftMinutes(v) { return Math.max(0, C.toMinutes(v.end) - C.toMinutes(v.start)); }
+  function hoursLabel(min) { var h = Math.floor(min / 60), m = min % 60; return (m ? (h + m / 60).toFixed(2).replace(/\.?0+$/, '') : h) + (h === 1 && !m ? ' hr' : ' hrs'); }
+  function teamItems(admin) {
+    if (admin) return state.assignments.map(function (a) { var v = {}; Object.keys(a).forEach(function (k) { v[k] = a[k]; }); v.state = C.publishState(a); return v; });
+    return allPublishedItems();
+  }
+  function viewDash(user) {
+    var admin = isAdmin(user);
+    var today = todayISO();
+    if (ui.dashWeek === undefined || ui.dashWeek === null) ui.dashWeek = C.upcomingSchoolWeekStart(today);
+    var ws = ui.dashWeek;
+    var items = teamItems(admin).sort(C.byTime);
+    var mine = items.filter(function (v) { return v.teacherId === user.id; });
+    var todays = mine.filter(function (v) { return v.date === today; });
+    var weekMine = mine.filter(function (v) { return C.inWeek(v.date, C.weekStart(today)); });
+    var next = mine.filter(function (v) { return v.date > today || (v.date === today && C.toMinutes(v.end) > nowMinutes()); })[0];
+    var schedMin = weekMine.reduce(function (n, v) { return n + shiftMinutes(v); }, 0);
+
+    var html = '<header class="topbar"><span class="brand">' + esc(state.settings.schoolName) + '</span><div class="actions">' +
+      (admin ? '' : '<a class="btn btn-sm btn-outline" href="/clock">' + ICON.clock + 'Break clock</a>') +
+      '<button class="btn btn-sm btn-ghost" type="button" data-action="logout">' + ICON.logout + 'Log out</button></div></header>';
+    html += '<section class="greeting"><p class="date">' + esc(C.formatDate(today, 'long')) + '</p><h1>' + esc(C.greeting(nowHour())) + ', ' + esc(C.firstName(user.name)) + '</h1></section>';
+
+    // Tiles
+    var todayTile;
+    if (!todays.length) todayTile = '<div class="tile"><span class="tile-label">Today</span><strong>Not scheduled</strong><span class="muted">Enjoy the day.</span></div>';
+    else {
+      var first = todays[0], cov = C.coverage(user, first);
+      todayTile = '<a class="tile' + (cov.kind === 'cross' ? ' tile-cross' : '') + '" href="#me" data-action="nav" data-route="me"><span class="tile-label">Today</span><strong>' + esc(locName(first.locationId)) + (todays.length > 1 ? ' +' + (todays.length - 1) : '') + '</strong><span class="muted">' + esc(C.formatTime(first.start)) + ' · ' + esc(posLabel(first.positionId)) + (cov.kind === 'cross' ? ' · ' + esc(cov.short) : '') + '</span></a>';
+    }
+    html += '<div class="tiles">' + todayTile +
+      '<div class="tile"><span class="tile-label">This week</span><strong>' + weekMine.length + (weekMine.length === 1 ? ' shift' : ' shifts') + '</strong><span class="muted">' + esc(hoursLabel(schedMin)) + ' scheduled</span></div>' +
+      '<div class="tile" id="tile-clocked"><span class="tile-label">Clocked this week</span><strong>…</strong><span class="muted">from the break clock</span></div>' +
+      '<div class="tile"><span class="tile-label">Next up</span>' + (next ? '<strong>' + esc(C.relativeDayLabel(next.date, today)) + ' ' + esc(C.formatTime(next.start)) + '</strong><span class="muted">' + esc(locName(next.locationId)) + ' · ' + esc(posLabel(next.positionId)) + '</span>' : '<strong>Nothing yet</strong><span class="muted">Check back after the next publish.</span>') + '</div>' +
+      '</div>';
+
+    // Team grid
+    var days = C.weekDays(ws, 7);
+    var weekItems = items.filter(function (v) { return C.inWeek(v.date, ws); });
+    var showDays = days.filter(function (d) { return !C.isWeekend(d) || weekItems.some(function (v) { return v.date === d; }); });
+    var people = activeTeachers().filter(function (t) { return t.id === user.id || weekItems.some(function (v) { return v.teacherId === t.id; }) || admin; });
+    people.sort(function (a, b) { return (a.id === user.id ? -1 : b.id === user.id ? 1 : 0) || a.name.localeCompare(b.name); });
+    var isThis = ws === C.upcomingSchoolWeekStart(today);
+    html += '<section class="section"><div class="grid-head"><h2 class="eyebrow">Team schedule</h2><div class="week-nav grid-nav">' +
+      '<button class="btn btn-sm btn-outline" type="button" data-action="dash-week" data-delta="0"' + (isThis ? ' disabled' : '') + '>Today</button>' +
+      '<button class="btn btn-sm btn-outline btn-icon" type="button" data-action="dash-week" data-delta="-1" aria-label="Previous week">' + ICON.left + '</button>' +
+      '<span class="label tnum">' + esc(C.formatWeekLabel(ws)) + '</span>' +
+      '<button class="btn btn-sm btn-outline btn-icon" type="button" data-action="dash-week" data-delta="1" aria-label="Next week">' + ICON.right + '</button></div></div>';
+    if (!weekItems.length) html += '<div class="day-empty">Nothing is published for this week yet.</div>';
+    html += '<div class="grid-wrap"><table class="sgrid"><thead><tr><th class="sg-person">Team members (' + people.length + ')</th>' + showDays.map(function (d) {
+      return '<th class="' + (d === today ? 'is-today' : '') + '"><span class="sg-dow">' + esc(C.formatDate(d, 'weekday-short')) + '</span> <span class="sg-day tnum">' + C.fromISODate(d).getDate() + '</span></th>';
+    }).join('') + '</tr></thead><tbody>';
+    people.forEach(function (t) {
+      var theirs = weekItems.filter(function (v) { return v.teacherId === t.id; });
+      var min = theirs.reduce(function (n, v) { return n + shiftMinutes(v); }, 0);
+      html += '<tr class="' + (t.id === user.id ? 'is-me' : '') + '"><td class="sg-person">' + avatar(t) + '<span class="sg-name"><strong>' + esc(t.name) + (t.id === user.id ? ' <span class="muted">(you)</span>' : '') + '</strong><span class="muted tnum">' + esc(hoursLabel(min)) + '</span></span></td>';
+      showDays.forEach(function (d) {
+        var cell = theirs.filter(function (v) { return v.date === d; });
+        html += '<td class="' + (d === today ? 'is-today' : '') + '">' + cell.map(function (v) {
+          var cov = C.coverage(t, v);
+          var cls = cov.kind === 'cross' ? 'sc-cross' : v.area === 'preschool' ? 'sc-pre' : 'sc-el';
+          var inner = '<span class="sc-time tnum">' + esc(C.formatTime(v.start).replace(':00', '').replace(' ', '').toLowerCase()) + '–' + esc(C.formatTime(v.end).replace(':00', '').replace(' ', '').toLowerCase()) + '</span><span class="sc-what">' + esc(posLabel(v.positionId)) + '</span><span class="sc-where">' + esc(locName(v.locationId)) + (cov.kind === 'cross' ? ' · ' + esc(cov.short) : '') + '</span>' + (admin && v.state !== 'published' ? '<span class="sc-state">' + (v.state === 'draft' ? 'draft' : 'changed') + '</span>' : '');
+          return admin ? '<button type="button" class="shiftchip ' + cls + '" data-action="edit-assignment" data-id="' + esc(v.id) + '">' + inner + '</button>' : '<span class="shiftchip ' + cls + '">' + inner + '</span>';
+        }).join('') + (admin && !cell.length ? '<button type="button" class="sg-add" data-action="new-assignment" data-date="' + d + '" data-teacher="' + esc(t.id) + '" aria-label="Add a shift for ' + esc(t.name) + ' on ' + esc(C.formatDate(d, 'short')) + '">' + ICON.plus + '</button>' : '') + '</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody><tfoot><tr><td class="sg-person"><div class="sg-pwrap sg-pwrap-col"><strong>Hours</strong><span class="muted">shifts</span></div></td>' + showDays.map(function (d) {
+      var cell = weekItems.filter(function (v) { return v.date === d; });
+      var min = cell.reduce(function (n, v) { return n + shiftMinutes(v); }, 0);
+      return '<td class="' + (d === today ? 'is-today' : '') + '"><strong class="tnum">' + esc(hoursLabel(min)) + '</strong><span class="muted tnum">' + cell.length + '</span></td>';
+    }).join('') + '</tr></tfoot></table></div>';
+    html += '<p class="legend"><span class="shiftchip sc-pre">Preschool</span><span class="shiftchip sc-el">Elementary</span><span class="shiftchip sc-cross">Covering the other area</span></p></section>';
+    html += adminTabs('dash');
+    return html;
+  }
+  // Clocked hours come from the server; fill the tile after render.
+  function fillClockedTile() {
+    var tile = document.getElementById('tile-clocked');
+    if (!tile) return;
+    api('GET', '/api/clock').then(function (j) {
+      var el = document.getElementById('tile-clocked'); if (!el) return;
+      if (j.__status !== 200 || typeof j.weekWorkedMin !== 'number') { el.querySelector('strong').textContent = '–'; return; }
+      el.querySelector('strong').textContent = hoursLabel(j.weekWorkedMin);
+      el.querySelector('.muted').textContent = j.state === 'working' ? 'Clocked in now' : j.state === 'break' ? 'On break now' : 'from the break clock';
+    }).catch(function () { /* leave placeholder */ });
   }
 
   function dayGroups(teacher, days, items, today, everyone, preview) {
@@ -582,10 +675,15 @@
 
   // ---------------------------------------------------------------- admin shell
   function adminTabs(active) {
-    var tabs = [['admin-week', 'Week', ICON.calendar], ['admin-board', 'Day board', ICON.board], ['admin-staff', 'Staff', ICON.people], ['admin-menu', 'Menu', ICON.menu]];
-    return '<nav class="tabbar tabbar-5" aria-label="Admin sections"><span class="tab-brand" aria-hidden="true">' + esc(state.settings.schoolName) + '</span>' + tabs.map(function (t) {
+    var admin = isAdmin(currentUser());
+    var tabs = admin
+      ? [['dash', 'Dash', ICON.board], ['admin-week', 'Week', ICON.calendar], ['admin-board', 'Rooms', ICON.pin], ['admin-staff', 'Staff', ICON.people], ['admin-menu', 'Menu', ICON.menu]]
+      : [['dash', 'Dash', ICON.board], ['me', 'My day', ICON.calendar]];
+    var html = '<nav class="tabbar tabbar-' + (tabs.length + 1) + '" aria-label="Sections"><span class="tab-brand" aria-hidden="true">' + esc(state.settings.schoolName) + '</span>' + tabs.map(function (t) {
       return '<a class="tab' + (active === t[0] ? ' is-active' : '') + '" href="#' + t[0] + '" data-action="nav" data-route="' + t[0] + '"' + (active === t[0] ? ' aria-current="page"' : '') + '>' + t[2] + '<span>' + t[1] + '</span></a>';
-    }).join('') + '<a class="tab" href="/admin/hours">' + ICON.clock + '<span>Hours</span></a></nav>';
+    }).join('');
+    html += admin ? '<a class="tab" href="/admin/hours">' + ICON.clock + '<span>Hours</span></a>' : '<a class="tab" href="/clock">' + ICON.clock + '<span>Clock</span></a>';
+    return html + '</nav>';
   }
   function adminTop(title, right) {
     return '<header class="topbar"><div><div class="brand">' + esc(state.settings.schoolName) + '</div><h1 class="title">' + esc(title) + '</h1></div><div class="actions">' + (right || '') + '</div></header>';
@@ -840,12 +938,12 @@
       var blocks = state.settings.blocks || {};
       var full = blocks.full || ['07:30', '15:30'];
       model = {
-        id: null, teacherId: '', date: defaults.date || ui.adminDay || todayISO(), start: full[0], end: full[1],
+        id: null, teacherId: defaults.teacherId || '', date: defaults.date || ui.adminDay || todayISO(), start: full[0], end: full[1],
         area: loc && loc.area !== 'shared' ? loc.area : '', locationId: defaults.locationId || '', positionId: '', coveringForTeacherId: '', note: ''
       };
     }
     rememberFocus();
-    ui.sheet = { kind: 'assignment', model: model, errors: [], warnings: [], isNew: !a, reassign: false, original: a ? a.teacherId : '' };
+    ui.sheet = { kind: 'assignment', model: model, errors: [], warnings: [], isNew: !a, reassign: false, original: a ? a.teacherId : '', prefill: !a && !!defaults.teacherId };
     renderLayer();
   }
   function optionList(list, value, labelFn) {
@@ -1155,7 +1253,7 @@
     var next = null;
     try { next = new URLSearchParams(location.search).get('next'); } catch (e) { /* ignore */ }
     if (next && /^\/[a-z]/i.test(next)) { location.href = next; return; }
-    go(isAdmin(currentUser()) ? 'admin-week' : 'me');
+    go('dash');
   }
   function login(teacherId, pin, master) {
     var body = master ? { teacherId: teacherId, master: master } : { teacherId: teacherId, pin: String(pin || '').trim() };
@@ -1217,8 +1315,13 @@
         ui.adminDay = null; ui.boardDay = null; ensureAdminWeek(); render(); break;
       }
       case 'admin-day': ui.adminDay = el.getAttribute('data-date'); render(); break;
+      case 'dash-week': {
+        var dd = Number(el.getAttribute('data-delta'));
+        ui.dashWeek = dd === 0 ? C.upcomingSchoolWeekStart(todayISO()) : C.addDays(ui.dashWeek, 7 * dd);
+        render(); break;
+      }
       case 'board-day': ui.boardDay = el.getAttribute('data-date'); render(); break;
-      case 'new-assignment': openAssignmentEditor(null, { date: el.getAttribute('data-date'), locationId: el.getAttribute('data-location') || '' }); break;
+      case 'new-assignment': openAssignmentEditor(null, { date: el.getAttribute('data-date'), locationId: el.getAttribute('data-location') || '', teacherId: el.getAttribute('data-teacher') || '' }); break;
       case 'edit-assignment': {
         var a = state.assignments.filter(function (x) { return x.id === el.getAttribute('data-id'); })[0];
         if (a) openAssignmentEditor(a); break;
@@ -1288,7 +1391,7 @@
     var key = e.target.getAttribute && e.target.getAttribute('data-change');
     if (key === 'demo-today') {
       state.settings.demoToday = e.target.value || null; markEdited(); save();
-      ui.adminWeek = null; ui.adminDay = null; ui.boardDay = null; ui.teacherWeekOffset = null;
+      ui.adminWeek = null; ui.adminDay = null; ui.boardDay = null; ui.teacherWeekOffset = null; ui.dashWeek = null;
       render(); toast(state.settings.demoToday ? 'Today is now ' + C.formatDate(state.settings.demoToday, 'short') + ' (demo).' : 'Using the real date and time.');
     } else if (key === 'demo-time') {
       state.settings.demoTime = e.target.value || '10:00'; markEdited(); save(); render();

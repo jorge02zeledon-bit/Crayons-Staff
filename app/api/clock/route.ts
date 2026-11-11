@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { allowedActions, newPunchId, type PunchType } from "@/lib/clock";
-import { addPunch, SCHOOL_TZ, statusOf } from "@/lib/clock-store";
+import { allowedActions, localDate, newPunchId, summarizeDays, type PunchType } from "@/lib/clock";
+import { addPunch, recentPunchesFor, SCHOOL_TZ, statusOf } from "@/lib/clock-store";
+import { weekStart } from "@/lib/hours";
 import { findTeacher, loadState } from "@/lib/schedule";
 
 export const runtime = "nodejs";
@@ -16,7 +17,12 @@ export async function GET() {
   const s = await loadState();
   const t = findTeacher(s, session.teacherId);
   const status = await statusOf(session.teacherId);
-  return NextResponse.json({ teacher: t ? { id: t.id, name: t.name } : null, tz: SCHOOL_TZ, ...status, allowed: allowedActions(status.state) });
+  // Hours worked so far this week (Monday to today), for the dashboard tile.
+  const now = new Date();
+  const ws = weekStart(localDate(now.toISOString(), SCHOOL_TZ));
+  const recent = (await recentPunchesFor(session.teacherId, now)).filter((p) => localDate(p.at, SCHOOL_TZ) >= ws);
+  const weekWorkedMin = summarizeDays(recent, SCHOOL_TZ).reduce((n, d) => n + d.workedMin, 0);
+  return NextResponse.json({ teacher: t ? { id: t.id, name: t.name } : null, tz: SCHOOL_TZ, ...status, allowed: allowedActions(status.state), weekWorkedMin });
 }
 
 /** POST /api/clock { type }: punch for the signed-in person from their own phone. */
