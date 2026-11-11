@@ -1,5 +1,7 @@
 # Crayons Staff
 
+Live at **https://crayonstaff.com** (schedule at `/schedule`, break clock at `/clock`, office kiosk at `/kiosk`).
+
 Staff site for the school: a phone-first **schedule** that tells each teacher where to be and whether they are covering the other age group, a **break clock** that teachers use with a QR badge, a card or their own phone, and an **hours report** for the admin team. Built with Next.js and deployed on Vercel, the same way as Crayons Pizza.
 
 ## What is where
