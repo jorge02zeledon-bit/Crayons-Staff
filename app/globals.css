@@ -9,9 +9,9 @@
 .status-big { padding: 20px; display: grid; gap: 6px; }
 .status-big .state { font-family: var(--font-display); font-weight: 800; font-size: 30px; line-height: 1.1; }
 .status-big .since { color: var(--fg-muted); }
-.status-big.is-working { border-color: var(--ok); box-shadow: inset 5px 0 0 var(--ok); }
-.status-big.is-break { border-color: var(--pre-rail); box-shadow: inset 5px 0 0 var(--pre-rail); }
-.btn-xl { min-height: 64px; font-size: 20px; border-radius: 16px; }
+.status-big.is-working { box-shadow: inset 5px 0 0 var(--ok), var(--shadow-sm); }
+.status-big.is-break { box-shadow: inset 5px 0 0 var(--pre-rail), var(--shadow-sm); }
+.btn-xl { min-height: 64px; font-size: 20px; }
 .punch-list { display: grid; gap: 6px; }
 .punch-list li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
 .punch-list .t { font-variant-numeric: tabular-nums; color: var(--fg-muted); }
@@ -20,7 +20,7 @@
 .notice.ok { background: var(--ok-soft); color: var(--ok); }
 table.hours { width: 100%; border-collapse: collapse; font-size: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 table.hours th, table.hours td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
-table.hours th { font-family: var(--font-display); font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-muted); background: var(--surface-2); }
+table.hours th { font-family: var(--font-display); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-muted); background: var(--surface-2); }
 table.hours td.num, table.hours th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 table.hours tr.total td { font-weight: 700; background: var(--surface-2); }
 table.hours .issue { color: var(--warn); font-size: 13px; }
@@ -35,7 +35,7 @@ table.hours .issue { color: var(--warn); font-size: 13px; }
 .kiosk-person { text-align: center; padding: 20px; }
 .kiosk-person .name { font-family: var(--font-display); font-weight: 800; font-size: 34px; }
 .kiosk-actions { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; margin-top: 16px; }
-.kiosk-actions .btn { min-height: 84px; font-size: 22px; border-radius: 18px; }
+.kiosk-actions .btn { min-height: 84px; font-size: 22px; border-radius: 24px; }
 .kiosk-done { text-align: center; padding: 28px 20px; }
 .kiosk-done .big { font-family: var(--font-display); font-weight: 800; font-size: 34px; }
 .badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }

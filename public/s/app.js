@@ -583,7 +583,7 @@
   // ---------------------------------------------------------------- admin shell
   function adminTabs(active) {
     var tabs = [['admin-week', 'Week', ICON.calendar], ['admin-board', 'Day board', ICON.board], ['admin-staff', 'Staff', ICON.people], ['admin-menu', 'Menu', ICON.menu]];
-    return '<nav class="tabbar tabbar-5" aria-label="Admin sections">' + tabs.map(function (t) {
+    return '<nav class="tabbar tabbar-5" aria-label="Admin sections"><span class="tab-brand" aria-hidden="true">' + esc(state.settings.schoolName) + '</span>' + tabs.map(function (t) {
       return '<a class="tab' + (active === t[0] ? ' is-active' : '') + '" href="#' + t[0] + '" data-action="nav" data-route="' + t[0] + '"' + (active === t[0] ? ' aria-current="page"' : '') + '>' + t[2] + '<span>' + t[1] + '</span></a>';
     }).join('') + '<a class="tab" href="/admin/hours">' + ICON.clock + '<span>Hours</span></a></nav>';
   }
