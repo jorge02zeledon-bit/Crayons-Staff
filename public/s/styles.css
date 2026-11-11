@@ -533,7 +533,6 @@ button.shiftchip { cursor: pointer; }
 
 /* ---------- Sign-in page (storefront style) ---------- */
 body:has(.login) { background: #fff; }
-body:has(.login) { background: #fff; }
 .app:has(.login) { max-width: 1100px; background: #fff; min-height: 100vh; }
 .login { padding-top: 0; gap: 0; display: block; }
 .login-top { display: flex; align-items: center; justify-content: center; padding: 18px 0 6px; border-bottom: 1px solid var(--line); margin-inline: -16px; padding-inline: 16px; }
