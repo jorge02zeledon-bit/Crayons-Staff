@@ -66,6 +66,9 @@ export function ClockPanel() {
         ) : <p className="muted">Nothing recorded yet today.</p>}
       </section>
       <p className="hint">Break time is taken off your hours. Forgot a punch? The office can add it.</p>
+      <footer className="logout-foot">
+        <button className="btn btn-outline btn-block" onClick={async () => { await fetch("/api/logout", { method: "POST", credentials: "same-origin" }); location.href = "/schedule"; }}>Log out</button>
+      </footer>
     </div>
   );
 }

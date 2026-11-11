@@ -482,7 +482,7 @@
       '</div></section>';
 
     html += '<footer class="footer-help"><p><strong>Something look wrong?</strong> Talk to ' + esc(state.settings.adminName) + '. ' + esc(state.settings.adminContact) + '</p></footer>';
-    if (!preview) html += adminTabs('me');
+    if (!preview) html += logoutFooter() + adminTabs('me');
     return html;
   }
 
@@ -560,7 +560,7 @@
       return '<td class="' + (d === today ? 'is-today' : '') + '"><strong class="tnum">' + esc(hoursLabel(min)) + '</strong><span class="muted tnum">' + cell.length + '</span></td>';
     }).join('') + '</tr></tfoot></table></div>';
     html += '<p class="legend"><span class="shiftchip sc-pre">Preschool</span><span class="shiftchip sc-el">Elementary</span><span class="shiftchip sc-cross">Covering the other area</span></p></section>';
-    html += adminTabs('dash');
+    html += logoutFooter() + adminTabs('dash');
     return html;
   }
   // Clocked hours come from the server; fill the tile after render.
@@ -675,6 +675,9 @@
   }
 
   // ---------------------------------------------------------------- admin shell
+  function logoutFooter() {
+    return '<footer class="logout-foot"><button class="btn btn-outline btn-block" type="button" data-action="logout">' + ICON.logout + 'Log out</button></footer>';
+  }
   function adminTabs(active) {
     var admin = isAdmin(currentUser());
     var tabs = admin
@@ -762,7 +765,7 @@
     if (!dayItems.length) html += '<div class="day-empty" style="margin-top:10px">No shifts on this day yet.</div>';
     else html += '<div class="rows" style="margin-top:10px">' + dayItems.map(function (a) { return adminRow(a, idx[a.id]); }).join('') + '</div>';
     html += '<div class="add-bar"><button class="btn btn-primary btn-block" type="button" data-action="new-assignment" data-date="' + day + '">' + ICON.plus + 'Add a shift on ' + esc(C.formatDate(day, 'weekday-short')) + '</button></div>';
-    html += adminTabs('admin-week');
+    html += logoutFooter() + adminTabs('admin-week');
     return html;
   }
 
@@ -814,7 +817,7 @@
     });
     var unplaced = items.filter(function (a) { return !L()[a.locationId]; });
     if (unplaced.length) html += '<section class="board-area"><h2 class="eyebrow">No location set</h2><div class="rows">' + unplaced.map(function (a) { return adminRow(a); }).join('') + '</div></section>';
-    html += adminTabs('admin-board');
+    html += logoutFooter() + adminTabs('admin-board');
     return html;
   }
 
@@ -837,7 +840,7 @@
           '<div><div class="s-name">' + esc(l.name) + '</div><div class="s-sub">' + esc(areaName[l.area] || l.area) + (l.detail ? ' \u00b7 ' + esc(l.detail) : '') + '</div></div>' +
           '<div class="s-actions"><button class="btn btn-sm btn-outline" type="button" data-action="edit-location" data-id="' + esc(l.id) + '">Edit</button></div></div>';
       }).join('') + '</div></section>';
-    html += adminTabs('admin-staff');
+    html += logoutFooter() + adminTabs('admin-staff');
     return html;
   }
 

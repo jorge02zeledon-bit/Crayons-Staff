@@ -567,3 +567,6 @@ body:has(.login) { background: #fff; }
 :root[data-theme="dark"] .login-h1, :root[data-theme="dark"] .login-col h2, :root[data-theme="dark"] .login-note, :root[data-theme="dark"] .login-lead, :root[data-theme="dark"] .login-help { color: var(--fg); }
 :root[data-theme="dark"] .login-input, :root[data-theme="dark"] .select.login-input { background: var(--surface-2); border-color: var(--control-border); }
 :root[data-theme="dark"] .login-logo { background: #fff; border-radius: 12px; padding: 6px; }
+
+/* ---------- Bottom log-out ---------- */
+.logout-foot { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--line); }
