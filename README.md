@@ -62,3 +62,7 @@ node scripts/e2e.mjs http://localhost:3000   # browser click-through against a r
 ## Security notes
 
 Sign-in cookies are signed with `AUTH_SECRET` and last 30 days; the kiosk cookie lasts 90 days. PINs are four digits and stored in the schedule document, which only admins can read: fine for a small school, not for anything sensitive. The badge code is the only thing on a QR badge, and a badge can only clock its own owner in and out on an unlocked kiosk.
+
+## Updating the site
+
+Every push to `main` deploys automatically on Vercel. Changing an environment variable needs a new deployment too: either push a commit, or in Vercel open Deployments, pick the latest one, and choose Redeploy from its menu.
