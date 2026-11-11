@@ -530,3 +530,41 @@ button.shiftchip { cursor: pointer; }
   .app.app-teacher.has-tabs { padding-bottom: 112px; }
 }
 @media (hover: none) { .sg-add { opacity: 0.6; } }
+
+/* ---------- Sign-in page (storefront style) ---------- */
+body:has(.login) { background: #fff; }
+body:has(.login) { background: #fff; }
+.app:has(.login) { max-width: 1100px; background: #fff; min-height: 100vh; }
+.login { padding-top: 0; gap: 0; display: block; }
+.login-top { display: flex; align-items: center; justify-content: center; padding: 18px 0 6px; border-bottom: 1px solid var(--line); margin-inline: -16px; padding-inline: 16px; }
+.login-logo { height: 120px; width: auto; display: block; }
+.login-h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; margin: 40px 0 28px; color: #1d1d1f; }
+.login-cols { display: grid; grid-template-columns: 1fr; gap: 32px; }
+.login-col h2 { font-size: 24px; font-weight: 600; color: #1d1d1f; margin-bottom: 18px; }
+.login-form { display: grid; gap: 12px; }
+.login-input, .select.login-input { min-height: 56px; font-size: 17px; border-radius: 12px; border: 1px solid #86868b; background: #fff; }
+.login-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); outline: none; }
+.login-error { display: flex; gap: 6px; align-items: center; color: #e30000; font-size: 14px; }
+.login-note { font-size: 15px; color: #1d1d1f; line-height: 1.45; }
+.login-lead { font-size: 17px; line-height: 1.5; color: #1d1d1f; margin-bottom: 24px; }
+.btn-login { min-height: 56px; font-size: 17px; border-radius: 12px; margin-top: 8px; }
+.login-form .btn-ghost { justify-self: start; }
+.login .errors { margin: 0 0 16px; }
+.login-help { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 17px; color: #1d1d1f; padding-bottom: 24px; }
+@media (min-width: 760px) {
+  .login-top { justify-content: flex-start; }
+  .login-logo { height: 110px; }
+  .login-cols { grid-template-columns: 1fr 1fr; gap: 56px; }
+  .login-col + .login-col { border-left: 1px solid var(--line); padding-left: 56px; }
+  .login-h1 { font-size: 48px; }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) body:has(.login), :root:not([data-theme="light"]) body:has(.login), :root:not([data-theme="light"]) .app:has(.login) { background: var(--surface); }
+  :root:not([data-theme="light"]) .login-h1, :root:not([data-theme="light"]) .login-col h2, :root:not([data-theme="light"]) .login-note, :root:not([data-theme="light"]) .login-lead, :root:not([data-theme="light"]) .login-help { color: var(--fg); }
+  :root:not([data-theme="light"]) .login-input, :root:not([data-theme="light"]) .select.login-input { background: var(--surface-2); border-color: var(--control-border); }
+  :root:not([data-theme="light"]) .login-logo { background: #fff; border-radius: 12px; padding: 6px; }
+}
+:root[data-theme="dark"] body:has(.login), :root[data-theme="dark"] body:has(.login), :root[data-theme="dark"] .app:has(.login) { background: var(--surface); }
+:root[data-theme="dark"] .login-h1, :root[data-theme="dark"] .login-col h2, :root[data-theme="dark"] .login-note, :root[data-theme="dark"] .login-lead, :root[data-theme="dark"] .login-help { color: var(--fg); }
+:root[data-theme="dark"] .login-input, :root[data-theme="dark"] .select.login-input { background: var(--surface-2); border-color: var(--control-border); }
+:root[data-theme="dark"] .login-logo { background: #fff; border-radius: 12px; padding: 6px; }

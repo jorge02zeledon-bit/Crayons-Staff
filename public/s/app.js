@@ -362,29 +362,30 @@
     var areaWord = { preschool: 'Preschool', elementary: 'Elementary', both: 'both areas' };
     return '' +
       '<main class="login">' +
-      '<div class="mark">' + ICON.school + '</div>' +
-      '<div><h1>' + esc(boot.schoolName) + '</h1><p class="sub">Staff schedule and break clock. Tap your name to sign in.</p></div>' +
+      '<header class="login-top"><a href="/schedule"><img class="login-logo" src="/logo.png" alt="' + esc(boot.schoolName) + '"></a></header>' +
+      '<h1 class="login-h1">Let’s get to work.</h1>' +
       (boot.error ? '<div class="errors" role="alert">' + esc(boot.error) + '</div>' : '') +
       (!boot.authConfigured ? '<div class="errors" role="alert">Sign-in is not set up yet: add an AUTH_SECRET environment variable in Vercel and redeploy.</div>' : '') +
-      '<ul class="people">' +
-      people.map(function (t) {
-        return '<li><button type="button" class="person' + (sel && sel.id === t.id ? ' is-selected' : '') + '" data-action="login-pick" data-id="' + esc(t.id) + '" aria-pressed="' + (sel && sel.id === t.id ? 'true' : 'false') + '">' +
-          avatar(t) +
-          '<span><span class="p-name">' + esc(t.name) + '</span><br><span class="p-sub">' + esc(t.role === 'admin' ? 'Admin' : (t.usualPosition || '') + (t.usualArea ? ' · usually ' + (areaWord[t.usualArea] || t.usualArea) : '')) + '</span></span>' +
-          '</button></li>';
-      }).join('') +
-      '</ul>' +
-      (sel ? '<form class="pin-box" data-form="login" id="login-form">' +
-        (ui.loginMaster
-          ? '<div class="field"><label for="master">Admin password</label><input class="input" id="master" name="master" type="password" autocomplete="current-password" autofocus></div>'
-          : '<div class="field"><label for="pin">PIN for ' + esc(C.firstName(sel.name)) + '</label>' +
-            '<input class="input pin-input" id="pin" name="pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" autofocus aria-describedby="pin-hint" placeholder="••••"></div>') +
-        (ui.loginError ? '<div class="errors" role="alert">' + esc(ui.loginError) + '</div>' : '') +
-        (sel.pin ? '<p class="demo-hint" id="pin-hint">Demo PIN for ' + esc(C.firstName(sel.name)) + ': <strong class="tnum">' + esc(sel.pin) + '</strong></p>' : '<p class="demo-hint" id="pin-hint">Ask ' + esc(C.firstName(boot.adminName) || 'the office') + ' if you forgot your PIN.</p>') +
-        '<button class="btn btn-primary btn-block" type="submit">' + (ui.loginMaster ? 'Sign in' : 'Open my schedule') + '</button>' +
-        (sel.role === 'admin' ? '<button class="btn btn-ghost btn-sm" type="button" data-action="login-master">' + (ui.loginMaster ? 'Use my PIN instead' : 'Use the admin password instead') + '</button>' : '') +
-        '</form>' : '') +
-      '<p class="hint" style="text-align:center">Just here for the break clock? <a href="/clock">Clock in or out</a>.</p>' +
+      '<div class="login-cols">' +
+      '<section class="login-col"><h2>Staff Sign In</h2>' +
+      '<form class="login-form" data-form="login" id="login-form">' +
+      '<div class="field"><label for="who" class="sr-only">Your name</label><select class="select login-input" id="who" name="teacherId" data-change="login-person"><option value="">Your name</option>' +
+      people.map(function (t) { return '<option value="' + esc(t.id) + '"' + (sel && sel.id === t.id ? ' selected' : '') + '>' + esc(t.name) + (t.role === 'admin' ? ' (admin)' : '') + '</option>'; }).join('') + '</select></div>' +
+      (ui.loginMaster
+        ? '<div class="field"><label for="master" class="sr-only">Admin password</label><input class="input login-input" id="master" name="master" type="password" autocomplete="current-password" placeholder="Admin password"></div>'
+        : '<div class="field"><label for="pin" class="sr-only">PIN</label><input class="input login-input" id="pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="PIN" aria-describedby="pin-hint"></div>') +
+      (ui.loginError ? '<p class="login-error" role="alert">' + ICON.info + ' ' + esc(ui.loginError) + '</p>' : '') +
+      '<p class="login-note" id="pin-hint">' + (sel && sel.pin ? 'Demo PIN for ' + esc(C.firstName(sel.name)) + ': <strong class="tnum">' + esc(sel.pin) + '</strong>.' : 'Your PIN is the 4-digit code the office gave you.') + '</p>' +
+      '<p class="login-note">' + (sel ? esc(sel.role === 'admin' ? 'Admin account.' : (sel.usualPosition || '') + (sel.usualArea ? ' · usually ' + (areaWord[sel.usualArea] || sel.usualArea) : '')) : 'Pick your name, then enter your PIN.') + '</p>' +
+      '<button class="btn btn-primary btn-block btn-login" type="submit">' + (ui.loginMaster ? 'Sign In with Admin Password' : 'Sign In') + '</button>' +
+      '<button class="btn btn-ghost btn-sm" type="button" data-action="login-master">' + (ui.loginMaster ? 'Use my PIN instead' : 'Admin? Use the admin password instead') + '</button>' +
+      '</form></section>' +
+      '<section class="login-col"><h2>Break Clock</h2>' +
+      '<p class="login-lead">Clocking in, taking a break, or heading home? Scan your badge at the front office, or use the clock on your own phone.</p>' +
+      '<a class="btn btn-primary btn-block btn-login" href="/clock">Open the Break Clock</a>' +
+      '<p class="login-note">Your schedule, the team dashboard and your hours appear once you sign in.</p>' +
+      '</section></div>' +
+      '<footer class="login-help"><p>Need some help? Ask <strong>' + esc(boot.adminName || 'the office') + '</strong> at the front office.</p></footer>' +
       '</main>';
   }
 
@@ -1368,7 +1369,7 @@
     if (!f) return;
     e.preventDefault();
     var kind = f.getAttribute('data-form');
-    if (kind === 'login') { var lf = new FormData(f); login(ui.loginPerson, lf.get('pin'), ui.loginMaster ? String(lf.get('master') || '') : null); }
+    if (kind === 'login') { var lf = new FormData(f); var who = String(lf.get('teacherId') || ''); if (!who) { ui.loginError = 'Pick your name first.'; render(); return; } ui.loginPerson = who; login(who, lf.get('pin'), ui.loginMaster ? String(lf.get('master') || '') : null); }
     else if (kind === 'assignment') saveAssignment(e.submitter && e.submitter.getAttribute('data-publish') === '1');
     else if (kind === 'teacher') saveTeacher();
     else if (kind === 'location') saveLocation();
@@ -1389,6 +1390,7 @@
     var seg = e.target.closest('.seg'); if (seg) syncSegmented(seg);
     if (e.target.closest('#editor-form')) { updateEditorLive(e.target.name); return; }
     var key = e.target.getAttribute && e.target.getAttribute('data-change');
+    if (key === 'login-person') { ui.loginPerson = e.target.value || null; ui.loginError = ''; render(); var pinEl = document.getElementById('pin') || document.getElementById('master'); focusEl(pinEl); return; }
     if (key === 'demo-today') {
       state.settings.demoToday = e.target.value || null; markEdited(); save();
       ui.adminWeek = null; ui.adminDay = null; ui.boardDay = null; ui.teacherWeekOffset = null; ui.dashWeek = null;

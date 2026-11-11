@@ -25,8 +25,8 @@ const text = async (sel = "body") => (await page.locator(sel).innerText()).repla
 
 async function login(name, pin) {
   await page.goto(base + "/schedule/");
-  await page.waitForSelector(".person");
-  await page.locator(".person", { hasText: name }).click();
+  await page.waitForSelector("#who");
+  await page.selectOption("#who", { label: name.includes("Dana") ? name + " (admin)" : name });
   await page.fill("#pin", pin);
   await page.locator("button[type=submit]").click();
 }
@@ -69,7 +69,7 @@ check(t.includes("Not clocked in") && /Clocked out/.test(t), "clocked out, punch
 await page.goto(base + "/schedule/");
 await page.waitForSelector(".greeting");
 await page.locator("button", { hasText: "Log out" }).click();
-await page.waitForSelector(".person");
+await page.waitForSelector("#who");
 
 console.log("[Admin: schedule edit saves to the server]");
 await login("Dana Reyes", "0000");
