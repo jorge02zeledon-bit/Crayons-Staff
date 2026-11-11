@@ -120,7 +120,7 @@ export function Kiosk({ schoolName }: { schoolName: string }) {
 
   return (
     <main className="kiosk">
-      <header className="topbar"><span className="brand">{schoolName}</span><a className="btn btn-sm btn-ghost" href="/schedule/">Schedule</a></header>
+      <header className="topbar"><span className="brand">{schoolName}</span><a className="btn btn-sm btn-ghost" href="/schedule">Schedule</a></header>
       <h1>Scan your badge</h1>
       <p className="muted">Hold your badge up to the camera, or tap it on the card reader.</p>
 

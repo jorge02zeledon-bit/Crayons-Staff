@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 /** Printable QR badges (one per person) and the break-room poster that opens the phone clock. */
 export default async function BadgesPage() {
-  if (!(await isAdmin())) redirect("/schedule/?next=/admin/badges");
+  if (!(await isAdmin())) redirect("/schedule?next=/admin/badges");
   const state = await loadState();
   const h = await headers();
   const host = h.get("x-forwarded-host") || h.get("host") || "localhost:3000";
@@ -23,7 +23,7 @@ export default async function BadgesPage() {
 
   return (
     <main className="page-wide">
-      <header className="topbar no-print"><a className="btn btn-sm btn-ghost" href="/schedule/#admin-menu">‹ Admin</a><h1 className="title" style={{ fontSize: 20 }}>Badges and QR codes</h1><a className="btn btn-sm btn-primary" href="javascript:window.print()">Print</a></header>
+      <header className="topbar no-print"><a className="btn btn-sm btn-ghost" href="/schedule#admin-menu">‹ Admin</a><h1 className="title" style={{ fontSize: 20 }}>Badges and QR codes</h1><a className="btn btn-sm btn-primary" href="javascript:window.print()">Print</a></header>
       <p className="notice no-print" style={{ marginTop: 12 }}>Print this page on card stock and cut out one badge per person. The kiosk reads the QR code with its camera; a barcode or card reader works too if you print the code as a barcode or store it on an NFC card. The poster goes by the break room: scanning it with a phone opens the personal clock.</p>
 
       <section style={{ marginTop: 20 }}>

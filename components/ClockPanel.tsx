@@ -26,7 +26,7 @@ export function ClockPanel() {
 
   const load = useCallback(async () => {
     const r = await fetch("/api/clock", { credentials: "same-origin" });
-    if (r.status === 401) { location.href = "/schedule/?next=/clock"; return; }
+    if (r.status === 401) { location.href = "/schedule?next=/clock"; return; }
     setStatus(await r.json());
   }, []);
   useEffect(() => { load(); const t = setInterval(() => tick((n) => n + 1), 30000); return () => clearInterval(t); }, [load]);

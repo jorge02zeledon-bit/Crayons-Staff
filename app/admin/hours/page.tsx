@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 type Params = { from?: string; to?: string; who?: string };
 
 export default async function HoursPage({ searchParams }: { searchParams: Promise<Params> }) {
-  if (!(await isAdmin())) redirect("/schedule/?next=/admin/hours");
+  if (!(await isAdmin())) redirect("/schedule?next=/admin/hours");
   const sp = await searchParams;
   const today = isoDate(new Date(), SCHOOL_TZ);
   const from = isISODate(sp.from) ? sp.from : weekStart(today);
@@ -37,7 +37,7 @@ export default async function HoursPage({ searchParams }: { searchParams: Promis
 
   return (
     <main className="page-wide">
-      <header className="topbar"><a className="btn btn-sm btn-ghost" href="/schedule/#admin-menu">‹ Admin</a><h1 className="title" style={{ fontSize: 20 }}>Hours worked</h1><a className="btn btn-sm btn-outline" href={`/admin/hours.csv?${q}`}>Download CSV</a></header>
+      <header className="topbar"><a className="btn btn-sm btn-ghost" href="/schedule#admin-menu">‹ Admin</a><h1 className="title" style={{ fontSize: 20 }}>Hours worked</h1><a className="btn btn-sm btn-outline" href={`/admin/hours.csv?${q}`}>Download CSV</a></header>
       {storage !== "redis" ? <p className="notice warn" style={{ marginTop: 12 }}>{storage === "temporary" ? "No database is connected: punches are kept in temporary server storage and are lost on each deploy. Add Upstash Redis in Vercel (Storage tab) and redeploy." : "Local file storage (.data/)."}</p> : null}
       <form className="filters" method="get" style={{ marginTop: 16 }}>
         <div className="field"><label htmlFor="from">From</label><input className="input" type="date" id="from" name="from" defaultValue={from} /></div>
