@@ -687,6 +687,7 @@
       return '<a class="tab' + (active === t[0] ? ' is-active' : '') + '" href="#' + t[0] + '" data-action="nav" data-route="' + t[0] + '"' + (active === t[0] ? ' aria-current="page"' : '') + '>' + t[2] + '<span>' + t[1] + '</span></a>';
     }).join('');
     html += admin ? '<a class="tab" href="/admin/hours">' + ICON.clock + '<span>Hours</span></a>' : '<a class="tab" href="/clock">' + ICON.clock + '<span>Clock</span></a>';
+    html += '<button type="button" class="tab tab-logout" data-action="logout">' + ICON.logout + '<span>Log out</span></button>';
     return html + '</nav>';
   }
   function adminTop(title, right) {
