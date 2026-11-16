@@ -22,9 +22,17 @@ export async function PUT(request: Request) {
   const incoming = await request.json().catch(() => null);
   if (!validateIncoming(incoming)) return NextResponse.json({ error: "That does not look like a schedule document." }, { status: 400 });
   const current = await loadState();
-  // Badge codes are managed on the server; keep them whatever the browser sent.
+  // Badge codes: admins may assign one (e.g. a plastic card's number); otherwise keep the server's.
   const badges = new Map(current.teachers.map((t) => [t.id, t.badgeCode]));
-  const next: ScheduleState = { ...incoming, teachers: incoming.teachers.map((t) => ({ ...t, badgeCode: badges.get(t.id) || t.badgeCode })) };
+  const seen = new Set<string>();
+  const teachers = incoming.teachers.map((t) => {
+    const wanted = String(t.badgeCode || "").trim().toUpperCase();
+    let code = wanted || badges.get(t.id) || "";
+    if (!code || seen.has(code)) code = badges.get(t.id) && !seen.has(badges.get(t.id)!) ? badges.get(t.id)! : "";
+    if (code) seen.add(code);
+    return { ...t, badgeCode: code || undefined };
+  });
+  const next: ScheduleState = { ...incoming, teachers };
   // The signed-in admin must stay an active admin.
   const me = next.teachers.find((t) => t.id === session.teacherId);
   if (!me || me.role !== "admin" || me.active === false) return NextResponse.json({ error: "You cannot remove your own admin access." }, { status: 400 });

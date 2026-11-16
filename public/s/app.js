@@ -1215,6 +1215,7 @@
       optionList(state.positions, m.usualPositionId, function (p) { return p.label; }) + '</select></div>' +
       '<div class="field"><label for="t-location">Usual room (optional)</label><select class="select" id="t-location" name="usualLocationId"><option value="">None</option>' +
       optionList(state.locations, m.usualLocationId, function (l) { return l.name; }) + '</select><p class="hint">Pre-fills new shifts and lets the app say “Tomorrow: Butterfly Room, as usual.”</p></div>' +
+      '<div class="field"><label for="t-badge">Badge code</label><input class="input tnum" id="t-badge" name="badgeCode" autocomplete="off" autocapitalize="characters" value="' + esc(m.badgeCode || '') + '" placeholder="Leave blank to keep the printed QR code"><p class="hint">What the kiosk reads. Printed QR badges use the code shown here. Using plastic cards instead? Click in this box and tap the card on the reader; it types the card\u2019s number in. Then save.</p></div>' +
       '<div class="field-row"><div class="field"><label for="t-pin">4-digit PIN</label><input class="input tnum" id="t-pin" name="pin" inputmode="numeric" maxlength="4" value="' + esc(m.pin) + '"></div>' +
       '<div class="field"><span class="label" id="t-role-label">Role</span><div class="seg" role="radiogroup" aria-labelledby="t-role-label">' + seg('role', 'teacher', 'Teacher') + seg('role', 'admin', 'Admin') + '</div></div></div>' +
       '<label class="check"><input type="checkbox" name="active"' + (m.active !== false ? ' checked' : '') + '> Active (can log in and be scheduled)</label>' +
@@ -1232,10 +1233,13 @@
     m.usualPositionId = String(fd.get('usualPositionId') || '');
     m.usualLocationId = String(fd.get('usualLocationId') || '');
     m.pin = String(fd.get('pin') || '').trim();
+    var badge = String(fd.get('badgeCode') || '').replace(/^CS:/i, '').trim().toUpperCase();
+    if (badge) m.badgeCode = badge;
     m.role = String(fd.get('role') || 'teacher');
     m.active = fd.get('active') != null;
     var errors = C.validateTeacher(m);
     if (!m.usualPositionId) errors.push('Choose a usual position.');
+    if (m.badgeCode && state.teachers.some(function (t) { return t.id !== m.id && (t.badgeCode || '').toUpperCase() === m.badgeCode; })) errors.push('That badge code already belongs to someone else.');
     if (session && session.teacherId === m.id && m.role !== 'admin') errors.push('You cannot remove your own admin access.');
     if (session && session.teacherId === m.id && !m.active) errors.push('You cannot mark yourself inactive while logged in.');
     if (errors.length) { ui.sheet.errors = errors; ui.sheet.model = m; renderLayer(); return; }
