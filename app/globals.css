@@ -40,7 +40,11 @@ table.hours .issue { color: var(--warn); font-size: 13px; }
 .kiosk-done .big { font-family: var(--font-display); font-weight: 800; font-size: 34px; }
 .badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
 .badge-card { background: #fff; color: #1d1b19; border: 1px solid #c9c3ba; border-radius: 16px; padding: 18px; display: grid; justify-items: center; gap: 6px; text-align: center; break-inside: avoid; }
-.badge-card svg { width: 180px; height: 180px; }
+.badge-card svg { width: 170px; height: 170px; }
+.badge-logo { height: 64px; width: auto; }
+.badge-card-lg { max-width: 360px; margin: 16px auto 0; padding: 24px; }
+.badge-card-lg svg { width: 220px; height: 220px; }
+.badge-card-lg .bname { font-size: 24px; }
 .badge-card .bname { font-family: var(--font-display); font-weight: 800; font-size: 20px; }
 .badge-card .bsub { font-size: 14px; color: #5c5853; }
 .badge-card .bcode { font-family: ui-monospace, Menlo, monospace; font-size: 13px; letter-spacing: 0.08em; color: #5c5853; }

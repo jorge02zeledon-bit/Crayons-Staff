@@ -29,6 +29,7 @@ export default async function BadgesPage() {
       <section style={{ marginTop: 20 }}>
         <p className="kicker">Break-room poster</p>
         <div className="poster">
+          <img className="badge-logo" src="/logo.png" alt="" />
           <div className="title">Taking a break?</div>
           <div dangerouslySetInnerHTML={{ __html: posterSvg }} />
           <div>Scan with your phone to clock out and back in.</div>
@@ -41,6 +42,7 @@ export default async function BadgesPage() {
         <div className="badges">
           {cards.map(({ t, svg }) => (
             <div className="badge-card" key={t.id}>
+              <img className="badge-logo" src="/logo.png" alt="" />
               <div dangerouslySetInnerHTML={{ __html: svg }} />
               <div className="bname">{t.name}</div>
               <div className="bsub">{pos.get(t.usualPositionId) || ""} · {state.settings.schoolName}</div>

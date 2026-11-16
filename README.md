@@ -12,6 +12,7 @@ Staff site for the school: a phone-first **schedule** that tells each teacher wh
 | `/clock` | teachers | Personal break clock: Clock in, Start break, End break, Clock out, with today's punches. Opens from the schedule header or by scanning the break-room poster. |
 | `/kiosk` | the office tablet | Unlock once with the kiosk password. Scans QR badges with the camera, accepts USB/Bluetooth card and barcode readers (they type the code), or a code typed by hand. Shows the person, their state, and big buttons for what they can do. |
 | `/admin/hours` | admins | Hours worked per person and per day for any date range, break time, missing punches flagged, CSV download, and a form to add or remove a punch. |
+| `/badge` | each person | Their own digital badge (logo, name, position, QR code) and, when enabled, an **Add to Apple Wallet** button. The session decides whose badge; nobody can open another person's. |
 | `/admin/badges` | admins | Printable QR badge for every active person plus the break-room poster. |
 
 ## How the break clock works
@@ -21,6 +22,24 @@ Staff site for the school: a phone-first **schedule** that tells each teacher wh
 3. A teacher scans → the kiosk shows their name and state → they tap **Start break**, **End break**, **Clock in** or **Clock out**.
 4. The **poster** (same page) goes by the break room. Scanning it with a phone opens `/clock`, where the teacher (signed in once with their PIN) taps the same buttons.
 5. Hours = time between clock in and clock out, minus breaks. The hours page flags anything odd (no clock-out, a break with no end, a clock-in while already in). The office can add a missing punch or remove a wrong one on the same page. A shift that is never clocked out is treated as forgotten after 16 hours so the next day starts clean.
+
+## Apple Wallet badges (optional)
+
+Each person can add their badge to Apple Wallet from `/badge`. Apple only accepts passes signed with a certificate from an Apple Developer account ($99/year), so this stays off until you add it:
+
+1. Join the Apple Developer Program and, in Certificates, Identifiers & Profiles, create a **Pass Type ID** (for example `pass.com.crayonstaff.badge`). Note your 10-character **Team ID**.
+2. Create a certificate for that Pass Type ID (upload a CSR from Keychain Access), download it, and export it from Keychain as a `.p12`.
+3. Convert and encode on a Mac or any machine with OpenSSL:
+   ```bash
+   openssl pkcs12 -in pass.p12 -clcerts -nokeys -out pass-cert.pem -legacy
+   openssl pkcs12 -in pass.p12 -nocerts -out pass-key.pem -legacy      # choose a passphrase
+   curl -o wwdr.cer https://www.apple.com/certificateauthority/AppleWWDRCAG4.cer
+   openssl x509 -inform der -in wwdr.cer -out wwdr.pem
+   base64 -i pass-cert.pem | tr -d '\n' > cert.b64 ; base64 -i pass-key.pem | tr -d '\n' > key.b64 ; base64 -i wwdr.pem | tr -d '\n' > wwdr.b64
+   ```
+4. In Vercel add `APPLE_PASS_TYPE_ID`, `APPLE_TEAM_ID`, `APPLE_PASS_CERT_B64`, `APPLE_PASS_KEY_B64`, `APPLE_PASS_KEY_PASSPHRASE` and `APPLE_WWDR_CERT_B64` with those values, then redeploy. The button appears on `/badge` automatically.
+
+Google Wallet is not wired up; it needs a Google Pay & Wallet Console issuer account and a service-account key. The same badge page works on Android as a home-screen bookmark in the meantime.
 
 ## Deploy to Vercel
 

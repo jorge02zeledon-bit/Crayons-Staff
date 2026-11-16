@@ -48,6 +48,16 @@ t = await text();
 check(t.includes("Break clock"), "break clock link in header");
 await shot("01-teacher-schedule");
 
+console.log("[My badge]");
+await page.goto(base + "/badge");
+await page.waitForSelector(".badge-card-lg");
+t = await text(".badge-card-lg");
+check(t.includes("Maria Lopez"), "badge page shows the signed-in person");
+check((await page.locator(".badge-card-lg img.badge-logo").count()) === 1 && (await page.locator(".badge-card-lg svg").count()) === 1, "badge has logo and QR");
+const walletStatus = (await page.request.get(base + "/api/wallet/apple")).status();
+check(walletStatus === 503, "wallet pass reports not configured (got " + walletStatus + ")");
+await page.goto(base + "/schedule");
+await page.waitForSelector(".sgrid");
 console.log("[Phone clock]");
 await page.locator("a", { hasText: "Break clock" }).click();
 await page.waitForSelector(".status-big");
@@ -179,6 +189,10 @@ const r3 = await p2.request.get(base + "/admin/hours.csv");
 check(r3.status() === 403, "CSV is admin only");
 await p2.goto(base + "/admin/hours");
 check(p2.url().includes("/schedule"), "hours page redirects to sign-in");
+const r4 = await p2.request.get(base + "/api/wallet/apple");
+check(r4.status() === 401, "wallet pass needs sign-in");
+await p2.goto(base + "/badge");
+check(p2.url().includes("/schedule"), "badge page redirects to sign-in");
 await ctx2.close();
 
 await browser.close();

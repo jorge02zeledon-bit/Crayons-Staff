@@ -683,10 +683,11 @@
     var tabs = admin
       ? [['dash', 'Dash', ICON.board], ['admin-week', 'Week', ICON.calendar], ['admin-board', 'Rooms', ICON.pin], ['admin-staff', 'Staff', ICON.people], ['admin-menu', 'Menu', ICON.menu]]
       : [['dash', 'Dash', ICON.board], ['me', 'My day', ICON.calendar]];
-    var html = '<nav class="tabbar tabbar-' + (tabs.length + 1) + '" aria-label="Sections"><span class="tab-brand" aria-hidden="true">' + esc(state.settings.schoolName) + '</span>' + tabs.map(function (t) {
+    var extra = admin ? '' : '<a class="tab" href="/badge">' + ICON.person + '<span>Badge</span></a>';
+    var html = '<nav class="tabbar tabbar-' + (tabs.length + (admin ? 1 : 2)) + '" aria-label="Sections"><span class="tab-brand" aria-hidden="true">' + esc(state.settings.schoolName) + '</span>' + tabs.map(function (t) {
       return '<a class="tab' + (active === t[0] ? ' is-active' : '') + '" href="#' + t[0] + '" data-action="nav" data-route="' + t[0] + '"' + (active === t[0] ? ' aria-current="page"' : '') + '>' + t[2] + '<span>' + t[1] + '</span></a>';
     }).join('');
-    html += admin ? '<a class="tab" href="/admin/hours">' + ICON.clock + '<span>Hours</span></a>' : '<a class="tab" href="/clock">' + ICON.clock + '<span>Clock</span></a>';
+    html += extra + (admin ? '<a class="tab" href="/admin/hours">' + ICON.clock + '<span>Hours</span></a>' : '<a class="tab" href="/clock">' + ICON.clock + '<span>Clock</span></a>');
     html += '<button type="button" class="tab tab-logout" data-action="logout">' + ICON.logout + '<span>Log out</span></button>';
     return html + '</nav>';
   }
@@ -913,6 +914,7 @@
     html += '<div class="card menu-card section"><h2>Break clock</h2>' +
       '<a class="btn btn-outline" href="/admin/hours">' + ICON.clock + 'Hours worked</a>' +
       '<a class="btn btn-outline" href="/admin/badges">' + ICON.people + 'Badges and QR codes</a>' +
+      '<a class="btn btn-outline" href="/badge">' + ICON.person + 'My own badge</a>' +
       '<a class="btn btn-outline" href="/kiosk">' + ICON.board + 'Open the kiosk on this device</a>' +
       '<p class="hint">Print a badge for each person from the badges page. A tablet at the office runs the kiosk; the break-room poster lets people clock from their own phone.</p></div>';
     html += '<div class="card menu-card section"><h2>Storage</h2><p class="small muted">' +
