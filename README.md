@@ -25,6 +25,8 @@ Staff site for the school: a phone-first **schedule** that tells each teacher wh
 
 ## Apple Wallet badges (optional)
 
+Wallet passes are enabled on crayonstaff.com; the certificate expires 2027-12-21 and must be renewed before then (repeat the steps below and replace the three certificate variables).
+
 Each person can add their badge to Apple Wallet from `/badge`. Apple only accepts passes signed with a certificate from an Apple Developer account ($99/year), so this stays off until you add it:
 
 1. Join the Apple Developer Program and, in Certificates, Identifiers & Profiles, create a **Pass Type ID** (for example `pass.com.crayonstaff.badge`). Note your 10-character **Team ID**.
