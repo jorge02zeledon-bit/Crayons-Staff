@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { loadState, saveState, teacherView, validateIncoming, type ScheduleState } from "@/lib/schedule";
 import { storageMode } from "@/lib/store";
+import { notifyPublished } from "@/lib/notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,5 +38,8 @@ export async function PUT(request: Request) {
   const me = next.teachers.find((t) => t.id === session.teacherId);
   if (!me || me.role !== "admin" || me.active === false) return NextResponse.json({ error: "You cannot remove your own admin access." }, { status: 400 });
   await saveState(next);
-  return NextResponse.json({ ok: true, savedAt: new Date().toISOString() });
+  // Tell people whose published shifts changed (the mobile app's push notifications).
+  let notified: { people: number; devices: number } = { people: 0, devices: 0 };
+  try { const r = await notifyPublished(current, next); notified = { people: r.people, devices: r.devices }; } catch { /* never block saving on push */ }
+  return NextResponse.json({ ok: true, savedAt: new Date().toISOString(), notified });
 }

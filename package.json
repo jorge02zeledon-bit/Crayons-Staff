@@ -13,7 +13,7 @@
   "dependencies": {
     "@upstash/redis": "^1.35.0",
     "jsqr": "^1.4.0",
-    "next": "16.4.4",
+    "next": "^16.4.6",
     "passkit-generator": "^3.7.0",
     "qrcode": "^1.5.4",
     "react": "19.3.1",

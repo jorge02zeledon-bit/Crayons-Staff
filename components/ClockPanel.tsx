@@ -39,6 +39,9 @@ export function ClockPanel() {
     if (!r.ok) { setMsg(j.error || "Something went wrong."); await load(); return; }
     setStatus(j);
     setMsg(`${PAST[type]} at ${fmt(new Date().toISOString(), j.tz)}.`);
+    // Inside the mobile app: schedule or cancel the break reminder.
+    const rn = (window as unknown as { ReactNativeWebView?: { postMessage: (s: string) => void } }).ReactNativeWebView;
+    if (rn) rn.postMessage(JSON.stringify(type === "break_start" ? { type: "breakStarted", minutes: 30 } : { type: "breakEnded" }));
   }
 
   if (!status) return <p className="muted" style={{ marginTop: 16 }}>Loading…</p>;

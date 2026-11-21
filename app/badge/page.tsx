@@ -4,6 +4,7 @@ import QRCode from "qrcode";
 import { getSession } from "@/lib/session";
 import { findTeacher, loadState } from "@/lib/schedule";
 import { appleWalletConfigured } from "@/lib/wallet";
+import { WalletButton } from "@/components/WalletButton";
 
 export const metadata: Metadata = { title: "My badge" };
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ export default async function BadgePage() {
       </div>
       <div className="stack no-print" style={{ marginTop: 16 }}>
         {wallet ? (
-          <a className="btn btn-primary btn-block btn-login" href="/api/wallet/apple">Add to Apple Wallet</a>
+          <WalletButton />
         ) : (
           <div className="notice">Apple Wallet isn't switched on for this site yet. The office can enable it by adding the Apple pass certificate in Vercel (see the README). Until then, keep this page handy: on an iPhone tap Share, then <strong>Add to Home Screen</strong>, and it opens straight to your badge.</div>
         )}

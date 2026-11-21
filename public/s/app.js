@@ -482,6 +482,8 @@
       '</div></section>';
 
     html += '<footer class="footer-help"><p><strong>Something look wrong?</strong> Talk to ' + esc(state.settings.adminName) + '. ' + esc(state.settings.adminContact) + '</p></footer>';
+    if (!preview && native.inApp) html += '<div class="card menu-card section"><h2>This phone</h2><label class="check"><input type="checkbox" data-change="native-lock"' + (native.lockEnabled ? ' checked' : '') + '> Ask for Face ID or passcode when the app opens</label>' +
+        '<p class="hint">Notifications: ' + (native.pushToken ? 'on for this phone.' : 'not allowed yet. Enable them for Crayons Staff in your phone settings.') + '</p></div>';
     if (!preview) html += logoutFooter() + adminTabs('me');
     return html;
   }
@@ -917,6 +919,8 @@
       '<a class="btn btn-outline" href="/badge">' + ICON.person + 'My own badge</a>' +
       '<a class="btn btn-outline" href="/kiosk">' + ICON.board + 'Open the kiosk on this device</a>' +
       '<p class="hint">Print a badge for each person from the badges page. A tablet at the office runs the kiosk; the break-room poster lets people clock from their own phone.</p></div>';
+    if (native.inApp) html += '<div class="card menu-card section"><h2>This phone</h2><label class="check"><input type="checkbox" data-change="native-lock"' + (native.lockEnabled ? ' checked' : '') + '> Ask for Face ID or passcode when the app opens</label>' +
+        '<p class="hint">Notifications: ' + (native.pushToken ? 'on for this phone.' : 'not allowed yet. Enable them for Crayons Staff in your phone settings.') + '</p></div>';
     html += '<div class="card menu-card section"><h2>Storage</h2><p class="small muted">' +
       (boot.storage === 'redis' ? 'Connected to the database. Everything you publish is saved for everyone.' :
         boot.storage === 'temporary' ? 'No database is connected yet, so data is kept in temporary server storage and is lost on each deploy. In Vercel, open the project’s Storage tab and add Upstash Redis, then redeploy.' :
@@ -1261,6 +1265,7 @@
   // ---------------------------------------------------------------- actions
   function afterLogin() {
     ui.loginError = ''; ui.loginPerson = null; ui.loginMaster = false; ui.teacherWeekOffset = null; ui.route = null;
+    registerPushToken();
     var next = null;
     try { next = new URLSearchParams(location.search).get('next'); } catch (e) { /* ignore */ }
     if (next && /^\/[a-z]/i.test(next)) { location.href = next; return; }
@@ -1278,6 +1283,7 @@
   }
   function logout() {
     if (saveQueued) flushSave();
+    if (native.pushToken && native.registered) { api('DELETE', '/api/devices', { token: native.pushToken }).catch(function () { /* ignore */ }); native.registered = null; }
     api('POST', '/api/logout').catch(function () { /* ignore */ }).then(function () {
       session = null; state = null; ui.sheet = null; ui.dialog = null; ui.loginPerson = null; ui.teacherWeekOffset = null; ui.route = null;
       loadStaff().then(function () { go('login'); });
@@ -1408,6 +1414,8 @@
     } else if (key === 'demo-time') {
       state.settings.demoTime = e.target.value || '10:00'; markEdited(); save(); render();
       toast('The time is now ' + C.formatTime(state.settings.demoTime) + ' (demo).');
+    } else if (key === 'native-lock') {
+      native.lockEnabled = !!e.target.checked; nativeSend({ type: 'setLock', enabled: native.lockEnabled });
     } else if (key === 'show-pins') {
       state.settings.showDemoPins = !!e.target.checked; markEdited(); save();
     }
@@ -1434,6 +1442,24 @@
     if (h && h !== ui.route) { ui.sheet = null; ui.dialog = null; ui.route = h; render(); }
   });
 
+  // ---------------------------------------------------------------- native app bridge
+  // Inside the iPhone/Android app the page gets the device's push token and can ask the app
+  // to schedule a break reminder, open a link outside, or turn Face ID on or off.
+  var native = { inApp: !!window.ReactNativeWebView, platform: '', lockEnabled: false, pushToken: null, registered: null };
+  function nativeSend(msg) { if (window.ReactNativeWebView) { try { window.ReactNativeWebView.postMessage(JSON.stringify(msg)); } catch (e) { /* ignore */ } } }
+  function registerPushToken() {
+    if (!native.pushToken || !session || native.registered === native.pushToken) return;
+    api('POST', '/api/devices', { token: native.pushToken, platform: native.platform }).then(function (j) { if (j.__status === 200) native.registered = native.pushToken; });
+  }
+  window.addEventListener('message', function (e) {
+    var msg = null;
+    try { msg = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (err) { return; }
+    if (!msg || typeof msg.type !== 'string') return;
+    if (msg.type === 'native') { native.inApp = true; native.platform = msg.platform || ''; native.lockEnabled = !!msg.lockEnabled; if (ui.route === 'admin-menu' || ui.route === 'me') render(); }
+    else if (msg.type === 'pushToken') { native.pushToken = msg.token; native.platform = msg.platform || native.platform; registerPushToken(); }
+  });
+  window.__native = native;
+
   // ---------------------------------------------------------------- boot
   document.getElementById('app').innerHTML = '<main class="login"><p class="muted">Loading…</p></main>';
   ui.route = readHash();
@@ -1441,6 +1467,7 @@
     boot.loaded = true;
     if (session && state && !T()[session.teacherId]) { session = null; state = null; }
     render();
+    registerPushToken();
   });
 
   // Exposed for debugging and QA scripts.

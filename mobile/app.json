@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "Crayons Staff",
+    "slug": "crayons-staff",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "crayonstaff",
+    "userInterfaceStyle": "automatic",
+    "splash": { "image": "./assets/splash-icon.png", "resizeMode": "contain", "backgroundColor": "#f5f4fb" },
+    "ios": {
+      "bundleIdentifier": "com.crayonstaff.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "The office kiosk scans staff badges with the camera.",
+        "NSFaceIDUsageDescription": "Unlock the app with Face ID.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.crayonstaff.app",
+      "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#ffffff" },
+      "permissions": ["CAMERA", "USE_BIOMETRIC", "USE_FINGERPRINT"]
+    },
+    "plugins": [
+      ["expo-notifications", { "icon": "./assets/notification-icon.png", "color": "#5b3df5" }],
+      ["expo-local-authentication", { "faceIDPermission": "Unlock the app with Face ID." }],
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-splash-screen"
+    ],
+    "extra": {
+      "siteUrl": "https://www.crayonstaff.com",
+      "eas": { "projectId": "" }
+    }
+  }
+}
