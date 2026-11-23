@@ -51,29 +51,49 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [path, setPath] = useState<string>("/schedule");
   const breakReminder = useRef<string | null>(null);
+  // Refs mirror the lock state for the AppState listener, which is registered once.
+  const lockEnabledRef = useRef(false);
+  const authing = useRef(false);
+  const lastAppState = useRef(AppState.currentState);
 
   // Face ID / passcode gate (optional; toggled from the web app's menu via the bridge).
+  // The system prompt itself flips the app to "inactive" and back, so `authing` keeps
+  // that round trip from being mistaken for a return from the background.
   const unlock = useCallback(async () => {
-    const hw = await LocalAuthentication.hasHardwareAsync();
-    const enrolled = hw && (await LocalAuthentication.isEnrolledAsync());
-    if (!enrolled) { setLocked(false); return; }
-    const r = await LocalAuthentication.authenticateAsync({ promptMessage: "Unlock Crayons Staff", cancelLabel: "Cancel" });
-    setLocked(!r.success);
+    if (authing.current) return;
+    authing.current = true;
+    try {
+      const hw = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = hw && (await LocalAuthentication.isEnrolledAsync());
+      if (!enrolled) { setLocked(false); return; }
+      const r = await LocalAuthentication.authenticateAsync({ promptMessage: "Unlock Crayons Staff", cancelLabel: "Cancel" });
+      setLocked(!r.success);
+    } catch {
+      setLocked(false);
+    } finally {
+      authing.current = false;
+    }
   }, []);
 
   useEffect(() => {
     (async () => {
       const enabled = (await SecureStore.getItemAsync(LOCK_KEY).catch(() => null)) === "1";
+      lockEnabledRef.current = enabled;
       setLockEnabled(enabled);
-      if (enabled) { setLocked(true); await unlock(); }
+      if (enabled) { setLocked(true); unlock(); }
       setReady(true);
       SplashScreen.hideAsync().catch(() => {});
       try { setToken(await getPushToken()); } catch { /* no push on this device */ }
     })();
-    // Re-lock when the app comes back after being in the background.
-    const sub = AppState.addEventListener("change", (s) => { if (s === "active" && lockEnabled) { setLocked(true); unlock(); } });
+    // Re-lock only when the app comes back from the background (not from the brief
+    // "inactive" state that the Face ID sheet, Control Center or a phone call cause).
+    const sub = AppState.addEventListener("change", (s) => {
+      const was = lastAppState.current;
+      lastAppState.current = s;
+      if (s === "active" && was === "background" && lockEnabledRef.current && !authing.current) { setLocked(true); unlock(); }
+    });
     return () => sub.remove();
-  }, [lockEnabled, unlock]);
+  }, [unlock]);
 
   // Tapping a notification opens the page it points to.
   useEffect(() => {
@@ -112,8 +132,21 @@ export default function App() {
       if (url.includes("/api/wallet/")) Linking.openURL(url).catch(() => {});
       else WebBrowser.openBrowserAsync(url).catch(() => {});
     } else if (msg.type === "setLock") {
-      const on = !!msg.enabled;
+      let on = !!msg.enabled;
+      if (on) {
+        // Confirm Face ID / passcode works on this phone before trusting it as the gate.
+        const hw = await LocalAuthentication.hasHardwareAsync();
+        const enrolled = hw && (await LocalAuthentication.isEnrolledAsync());
+        if (!enrolled) on = false;
+        else {
+          authing.current = true;
+          try { on = (await LocalAuthentication.authenticateAsync({ promptMessage: "Turn on app lock", cancelLabel: "Cancel" })).success; }
+          catch { on = false; }
+          finally { authing.current = false; }
+        }
+      }
       await SecureStore.setItemAsync(LOCK_KEY, on ? "1" : "0").catch(() => {});
+      lockEnabledRef.current = on;
       setLockEnabled(on);
       sendToPage({ type: "native", platform: Platform.OS, version: Constants.expoConfig?.version || "", lockEnabled: on });
     }
@@ -131,17 +164,16 @@ export default function App() {
   }, []);
 
   if (!ready) return <View style={styles.center}><ActivityIndicator /></View>;
-  if (locked) {
-    return (
-      <SafeAreaView style={styles.center}>
-        <Text style={styles.lockTitle}>Crayons Staff</Text>
-        <TouchableOpacity style={styles.btn} onPress={unlock}><Text style={styles.btnText}>Unlock</Text></TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
+  // The page stays mounted under the lock screen so unlocking never reloads it.
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar style="dark" />
+      {locked && (
+        <View style={styles.lockOverlay}>
+          <Text style={styles.lockTitle}>Crayons Staff</Text>
+          <TouchableOpacity style={styles.btn} onPress={unlock}><Text style={styles.btnText}>Unlock</Text></TouchableOpacity>
+        </View>
+      )}
       <NativeWebView
         ref={webRef}
         source={{ uri: SITE + path }}
@@ -168,6 +200,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#f5f4fb" },
   web: { flex: 1, backgroundColor: "#f5f4fb" },
   center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#f5f4fb", gap: 16 },
+  lockOverlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 10, elevation: 10, alignItems: "center", justifyContent: "center", backgroundColor: "#f5f4fb", gap: 16 },
   lockTitle: { fontSize: 24, fontWeight: "700", color: "#1e1b3a" },
   btn: { backgroundColor: "#5b3df5", paddingHorizontal: 28, paddingVertical: 14, borderRadius: 999 },
   btnText: { color: "#fff", fontWeight: "600", fontSize: 17 },
