@@ -7,7 +7,11 @@
     "icon": "./assets/icon.png",
     "scheme": "crayonstaff",
     "userInterfaceStyle": "automatic",
-    "splash": { "image": "./assets/splash-icon.png", "resizeMode": "contain", "backgroundColor": "#f5f4fb" },
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f5f4fb"
+    },
     "ios": {
       "bundleIdentifier": "com.crayonstaff.app",
       "supportsTablet": true,
@@ -19,19 +23,39 @@
     },
     "android": {
       "package": "com.crayonstaff.app",
-      "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#ffffff" },
-      "permissions": ["CAMERA", "USE_BIOMETRIC", "USE_FINGERPRINT"]
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "CAMERA",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT"
+      ]
     },
     "plugins": [
-      ["expo-notifications", { "icon": "./assets/notification-icon.png", "color": "#5b3df5" }],
-      ["expo-local-authentication", { "faceIDPermission": "Unlock the app with Face ID." }],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#5b3df5"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Unlock the app with Face ID."
+        }
+      ],
       "expo-secure-store",
       "expo-web-browser",
       "expo-splash-screen"
     ],
     "extra": {
       "siteUrl": "https://www.crayonstaff.com",
-      "eas": { "projectId": "" }
+      "eas": {
+        "projectId": "ed34b61d-68bf-4e71-88d3-d609f912b041"
+      }
     }
   }
 }
