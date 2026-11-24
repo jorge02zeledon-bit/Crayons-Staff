@@ -56,3 +56,12 @@ table.hours .issue { color: var(--warn); font-size: 13px; }
   .no-print { display: none !important; }
   .badges { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Long-form text pages (privacy, support) */
+.prose .card { padding: 20px; }
+.prose h2 { font-size: 17px; margin: 18px 0 6px; }
+.prose h2:first-of-type { margin-top: 4px; }
+.prose p, .prose li { font-size: 15px; line-height: 1.55; color: var(--fg); }
+.prose ul { padding-left: 20px; margin: 6px 0 10px; }
+.prose li { margin-bottom: 6px; }
+.prose a { color: var(--accent); }
